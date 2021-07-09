@@ -21,7 +21,6 @@ app.post("/viewed", (req, res) => {
 
 app.post("/transaction", auth, async (req, res) => {
   const api = wretch().url(`${HASURA_URL}/v1/graphql`).headers(req.headers);
-
   const { transaction } = req.body;
 
   let query = `query {
@@ -42,8 +41,6 @@ app.post("/transaction", auth, async (req, res) => {
 
   let r = await hasura.post({ query }).json().catch(console.error);
   let { owner, title, bid, slug } = r.data.artworks[0];
-
-  console.log(owner, bid);
 
   let locals = {
     outbid: false,
@@ -83,8 +80,6 @@ app.post("/transaction", auth, async (req, res) => {
       artwork_id
     } 
   }`;
-
-  const { transaction } = req.body;
 
   r = await api
     .post({ query, variables: { transaction } })
