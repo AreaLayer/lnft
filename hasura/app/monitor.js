@@ -58,34 +58,32 @@ const insertTransaction = `mutation ($transaction: transactions_insert_input!) {
 const transferOwnership = async ({
   data: { update_transactions_by_pk: transaction },
 }) => {
-  try {
-    let owner_id;
+  let owner_id;
 
-    if (transaction.type === "accept") owner_id = transaction.bid.user_id;
+  if (transaction.type === "accept") owner_id = transaction.bid.user_id;
 
-    if (transaction.type === "purchase") {
-      owner_id = transaction.user_id;
+  if (transaction.type === "purchase") {
+    owner_id = transaction.user_id;
 
-      let {
-        artwork_id,
-        hash,
-        psbt,
-        artwork: { asset },
-      } = transaction;
+    let {
+      artwork_id,
+      hash,
+      psbt,
+      artwork: { asset },
+    } = transaction;
 
-      await hasura
-        .post({
-          query: insertTransaction,
-          variables: {
-            transaction: {
-              type: "receipt",
-              user_id: transaction.artwork.owner_id,
-              artwork_id,
-              hash,
-              psbt,
-              amount: 1,
-              asset,
-            },
+    await hasura
+      .post({
+        query: insertTransaction,
+        variables: {
+          transaction: {
+            type: "receipt",
+            user_id: transaction.artwork.owner_id,
+            artwork_id,
+            hash,
+            psbt,
+            amount: -1,
+            asset,
           },
         })
         .json()
@@ -233,7 +231,7 @@ app.get("/transactions", auth, async (req, res) => {
     let txns = [...(await get(user.address)), ...(await get(user.multisig))];
 
     query = `query {
-      transactions(where: { user_id: {_eq: "${user.id}"}})  {
+      transactions(where: { user_id: {_eq: "${user.id}"}}) {
         hash
       }
     }`;
@@ -313,7 +311,20 @@ app.get("/transactions", auth, async (req, res) => {
       }
     }
 
-    res.send({});
+    query = `query {
+      transactions(order_by: {created_at: desc}, where: {
+        user_id: {_eq: "${user.id}"}, 
+        type: {_in: ["deposit", "withdrawal", "creation", "release", "purchase", "receipt"]}
+      }) {
+        id
+        hash
+        amount
+        created_at
+        asset
+      }
+    }`;
+
+    res.send((await hasura.post({ query }).json()).data);
   } catch (e) {
     console.log(e);
     res.code(500).send(e.message);
