@@ -85,21 +85,18 @@ const transferOwnership = async ({
             amount: -1,
             asset,
           },
-        })
-        .json()
-        .catch(console.log);
-    }
-
-    hasura.post({
-      query: updateArtwork,
-      variables: {
-        id: transaction.artwork_id,
-        owner_id,
-      },
-    });
-  } catch (e) {
-    console.log(e);
+        },
+      })
+      .json();
   }
+
+  hasura.post({
+    query: updateArtwork,
+    variables: {
+      id: transaction.artwork_id,
+      owner_id,
+    },
+  });
 };
 
 const confirmTransactions = ({ data: { transactions } }) => {
@@ -113,9 +110,7 @@ const confirmTransactions = ({ data: { transactions } }) => {
           hasura
             .post({ query: setConfirmed, variables: { id: tx.id } })
             .json(transferOwnership)
-            .catch(console.log)
-      )
-      .catch(console.log);
+      );
   });
 };
 
@@ -144,10 +139,8 @@ app.post("/asset/register", async (req, res) => {
 
   let proofs = {};
   try {
-    proofs = JSON.parse(fs.readFileSync("/export/proofs.json"));
-  } catch (e) {
-    console.log(e);
-  }
+    proofs = require("/export/proofs.json");
+  } catch (e) {}
 
   proofs[asset] = true;
   fs.writeFileSync("/export/proofs.json", JSON.stringify(proofs));
