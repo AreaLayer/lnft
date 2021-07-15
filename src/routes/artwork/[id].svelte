@@ -137,7 +137,8 @@
       .auth(`Bearer ${$token}`)
       .url("/transaction")
       .post({ transaction })
-      .json();
+      .json().catch(err);
+    
     if (result.errors) {
       if (artwork && artwork.bid[0]) {
         return err(
